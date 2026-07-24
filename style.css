@@ -1,0 +1,495 @@
+/* ================================================================
+   DESIGN TOKENS
+   Change these to re-theme the whole site from one place.
+   ================================================================ */
+:root {
+  /* Color: near-void black + a warm gold/ember duotone accent —
+     candlelight rather than the generic sci-fi blue/violet glow. */
+  --void: #07070b;
+  --void-deep: #0c0b12;
+  --ink: #f4f1ec;
+  --ink-dim: rgba(244, 241, 236, 0.62);
+  --ink-faint: rgba(244, 241, 236, 0.38);
+  --gold: #e8c27a;
+  --ember: #d1665c;
+
+  /* Glass surfaces */
+  --glass-fill: rgba(244, 241, 236, 0.055);
+  --glass-fill-strong: rgba(244, 241, 236, 0.09);
+  --glass-border: rgba(244, 241, 236, 0.14);
+  --glass-border-strong: rgba(244, 241, 236, 0.26);
+
+  /* Type */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, svg, canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--void);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ================================================================
+   CUSTOM CURSOR
+   Hidden by default; script.js adds .custom-cursor-active to <body>
+   only after confirming a fine-pointer, motion-friendly device, so
+   there is never a "half-broken" cursor state.
+   ================================================================ */
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 50%;
+  will-change: transform;
+  display: none;
+}
+
+body.custom-cursor-active .cursor-dot,
+body.custom-cursor-active .cursor-ring {
+  display: block;
+}
+
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transition: width 0.25s var(--ease-out-quart), height 0.25s var(--ease-out-quart);
+}
+
+.cursor-ring {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--glass-border-strong);
+  transition: width 0.3s var(--ease-out-quart), height 0.3s var(--ease-out-quart), border-color 0.3s ease, background 0.3s ease;
+}
+
+.cursor-dot.is-active {
+  width: 0;
+  height: 0;
+}
+
+.cursor-ring.is-active {
+  width: 64px;
+  height: 64px;
+  border-color: var(--gold);
+  background: rgba(232, 194, 122, 0.08);
+}
+
+body.custom-cursor-active {
+  cursor: none;
+}
+
+/* These elements set their own explicit native cursor for the
+   no-custom-cursor fallback path, so when the custom cursor IS
+   active we have to win that fight back explicitly (a directly-set
+   cursor value beats one merely inherited from <body>). */
+body.custom-cursor-active button,
+body.custom-cursor-active #hero-canvas {
+  cursor: none;
+}
+
+/* ================================================================
+   TYPE HELPERS
+   ================================================================ */
+.eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  font-weight: 500;
+}
+
+/* ================================================================
+   HERO
+   ================================================================ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 20%, var(--void-deep), transparent 60%),
+    linear-gradient(180deg, var(--void) 0%, #050408 100%);
+}
+
+/* Positioning/scroll-parallax layer. GSAP scrubs THIS element's
+   transform on scroll; kept separate from .ambient-glow itself so it
+   never fights with that element's own CSS keyframe animation below
+   (a CSS animation targeting `transform` always wins the cascade over
+   an inline style targeting the same property on the same element —
+   splitting them across parent/child lets both compose correctly). */
+.ambient-glow-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.ambient-glow {
+  position: absolute;
+  width: 42vw;
+  height: 42vw;
+  max-width: 560px;
+  max-height: 560px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.ambient-glow--gold {
+  top: 8%;
+  left: 10%;
+  background: radial-gradient(circle, var(--gold), transparent 70%);
+  animation: driftA 16s ease-in-out infinite;
+}
+
+.ambient-glow--ember {
+  bottom: 6%;
+  right: 8%;
+  background: radial-gradient(circle, var(--ember), transparent 70%);
+  animation: driftB 20s ease-in-out infinite;
+}
+
+@keyframes driftA {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(4%, 6%) scale(1.08); }
+}
+
+@keyframes driftB {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5%, -4%) scale(1.05); }
+}
+
+#hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+body:not(.custom-cursor-active) #hero-canvas {
+  cursor: pointer;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.75rem;
+  padding: 2rem;
+  /* Mouse events fall through to the canvas by default, so the
+     hero object keeps tracking the pointer even while it's over
+     this text — only the CTA button opts back in below. */
+  pointer-events: none;
+}
+
+/* ================================================================
+   UNWRAP CTA
+   ================================================================ */
+.unwrap-cta {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.9rem 1.6rem;
+  border-radius: 999px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  /* Only CSS-hover-driven properties here. GSAP drives this element's
+     opacity/transform directly elsewhere (explosion fade-out, magnetic
+     pull) — a CSS transition on those same properties would fight the
+     JS-driven tween frame by frame instead of composing with it. */
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.unwrap-cta:hover {
+  background: var(--glass-fill-strong);
+  border-color: var(--glass-border-strong);
+}
+
+.unwrap-cta:disabled {
+  pointer-events: none;
+}
+
+.unwrap-cta__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 12px 2px rgba(232, 194, 122, 0.7);
+  animation: pulseDot 2.2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* ================================================================
+   KINETIC HEADING
+   Starts invisible; script.js reveals it (via GSAP SplitText) only
+   once fonts are ready and the characters are safely masked off-
+   screen, so there's never a flash of unsplit or unstyled text.
+   ================================================================ */
+.kinetic-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  font-size: clamp(2.75rem, 8.5vw, 6.5rem);
+  opacity: 0;
+}
+
+.kinetic-heading__line {
+  display: block;
+}
+
+.kinetic-heading__line--accent {
+  color: var(--gold);
+}
+
+/* ================================================================
+   SCROLL CUE
+   ================================================================ */
+.scroll-cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 0.5rem;
+}
+
+.scroll-cue__line {
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(180deg, var(--ink-faint), transparent);
+  animation: scrollLinePulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollLinePulse {
+  0%, 100% { transform: scaleY(1); opacity: 0.6; }
+  50% { transform: scaleY(0.55); opacity: 1; }
+}
+
+/* ================================================================
+   TEAM MESSAGES SECTION
+   ================================================================ */
+.wishes {
+  position: relative;
+  padding: clamp(4rem, 10vw, 8rem) clamp(1.5rem, 6vw, 4rem);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, var(--void-deep), transparent 60%),
+    var(--void);
+}
+
+.wishes__header {
+  max-width: 640px;
+  margin: 0 auto 3.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.wishes__heading {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.wishes__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ================================================================
+   GLASS CARD
+   ================================================================ */
+.glass-card {
+  position: relative;
+  padding: 2rem 1.75rem;
+  border-radius: 22px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* Subtle luminous gradient ring, drawn with a masked pseudo-element
+   so it reads as a hairline border-glow rather than a flat border. */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--glass-border-strong), transparent 40%, transparent 60%, var(--glass-border-strong));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glass-card__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, var(--gold), var(--ember));
+  color: var(--void);
+  flex-shrink: 0;
+}
+
+.glass-card__message {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink-dim);
+  flex: 1;
+}
+
+.glass-card__name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.glass-card__role {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  margin-top: 0.15rem;
+}
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+.site-footer {
+  padding: 2.5rem 1.5rem 3.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 640px) {
+  .ambient-glow {
+    width: 70vw;
+    height: 70vw;
+    filter: blur(70px);
+  }
+
+  .glass-card {
+    padding: 1.5rem 1.35rem;
+  }
+
+  .unwrap-cta {
+    padding: 0.8rem 1.3rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Custom cursor never makes sense without a fine, hover-capable
+   pointer — belt-and-braces alongside the JS feature check. */
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot,
+  .cursor-ring {
+    display: none !important;
+  }
+}
+
+/* ================================================================
+   REDUCED MOTION
+   script.js also branches on this (shorter reveal, no particle
+   burst, no custom cursor/tilt) — this covers the pure-CSS animations.
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .ambient-glow,
+  .unwrap-cta__dot,
+  .scroll-cue__line {
+    animation: none;
+  }
+}
